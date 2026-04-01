@@ -94,50 +94,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Register - ZaramOUTFITTERS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-        }
-        .register-container {
-            max-width: 600px;
-            margin: 50px auto;
-        }
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
-        }
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border-radius: 15px 15px 0 0;
-            padding: 20px;
-        }
-        .btn-register {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 12px;
-            font-weight: 600;
-            color: white;
-            width: 100%;
-        }
-        .btn-register:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-        }
-        .input-group-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-        }
-        .error-message {
-            color: #dc3545;
-            font-size: 0.875rem;
-            margin-top: 0.25rem;
-        }
-    </style>
+    <link href="css/style.css" rel="stylesheet">
 </head>
+
 <body>
     <?php include 'nav.html'; ?>
 
@@ -162,21 +121,28 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <form method="POST" action="<?php echo htmlspecialchars($_SERVER['PHP_SELF']); ?>">                
                     <div class="row">
                         <div class="col-md-6 mb-3">
-                            <label for="firstname" class="form-label">First Name *</label>
-                            <input type="text" class="form-control" id="firstname" name="firstname" 
-                                   value="<?php echo htmlspecialchars($firstname); ?>" required>
+                            <label for="Firstname" class="form-label"></i>First Name *</label>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user me-1"></i></span>
+                                <input type="text" class="form-control" id="Firstname" name="firstname" placeholder="Enter first name"
+                                value="<?php echo htmlspecialchars($firstname); ?>" required>
+                            </div>
                         </div>                        
                         <div class="col-md-6 mb-3">
                             <label for="lastname" class="form-label">Last Name *</label>
-                            <input type="text" class="form-control" id="lastname" name="lastname" 
-                                   value="<?php echo htmlspecialchars($lastname); ?>" required>
+                            <div class="input-group">
+                                <span class="input-group-text"><i class="fas fa-user me-1"></i></span>
+                                <input type="text" class="form-control" id="lastname" name="lastname" placeholder="Enter last name"
+                                value="<?php echo htmlspecialchars($lastname); ?>" required>
+                            </div>
                         </div>
+
                     </div>                 
                     <div class="mb-3">
                         <label for="email" class="form-label">Email Address *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-envelope"></i></span>
-                            <input type="email" class="form-control" id="email" name="email" 
+                            <input type="email" class="form-control" id="email" name="email" placeholder="you@example.com"
                                    value="<?php echo htmlspecialchars($email); ?>" required>
                         </div>
                     </div>
@@ -184,21 +150,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                         <label for="phone" class="form-label">Phone Number *</label>
                         <div class="input-group">
                             <span class="input-group-text"><i class="fas fa-phone"></i></span>
-                            <input type="tel" class="form-control" id="phone" name="phone" 
+                            <input type="tel" class="form-control" id="phone" name="phone" placeholder="+44(0)7000000000"
                                    value="<?php echo htmlspecialchars($phone); ?>" required>
                         </div>
                     </div>
                     <div class="mb-3">
-                        <label for="dob" class="form-label">Date of Birth *</label>
-                        <input type="date" class="form-control" id="dob" name="dob" 
-                               value="<?php echo htmlspecialchars($dob); ?>" required>
+                        <label for="dob" class="form-label"></i>Date of Birth * </label>
+                        <div class="input-group">
+                            <span class="input-group-text"><i class="fas fa-calendar me-1"></i></span>
+                            <input type="date" class="form-control" id="dob" name="dob" 
+                            value="<?php echo htmlspecialchars($dob); ?>" required>
+                        </div>
                     </div>
                     <div class="row">
                         <div class="col-md-6 mb-3">
                             <label for="password" class="form-label">Password *</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-lock"></i></span>
-                                <input type="password" class="form-control" id="password" name="password" required>
+                                <input type="password" class="form-control" id="password" name="password" placeholder="Create password" required>
                             </div>
                             <small class="text-muted">Minimum 8 characters</small>
                         </div>
@@ -206,7 +175,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                             <label for="confirm_password" class="form-label">Confirm Password *</label>
                             <div class="input-group">
                                 <span class="input-group-text"><i class="fas fa-check"></i></span>
-                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" required>
+                                <input type="password" class="form-control" id="confirm_password" name="confirm_password" placeholder="Re-enter password"  required>
                             </div>
                         </div>
                     </div>
@@ -230,6 +199,29 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </div>
         </div>
     </div>
+    
+    <script>
+        function validateForm() {
+            var password = document.getElementById("password").value;
+            var confirmPassword = document.getElementById("confirmPassword").value;
+            var message = document.getElementById("message");
+            
+            if (password.length < 8) {
+                message.innerHTML = "Password must be at least 8 characters long!";
+                message.classList.remove("d-none");
+                return false;
+            }
+            
+            if (password !== confirmPassword) {
+                message.innerHTML = "Passwords do not match!";
+                message.classList.remove("d-none");
+                return false;
+            }
+            
+            return true; 
+        }
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
