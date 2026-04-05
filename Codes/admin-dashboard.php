@@ -19,16 +19,51 @@ if (isset($_POST['add_equipment'])) {
     $daily_rate       = $_POST['daily_rate'];
     $total_quantity   = $_POST['total_quantity'];
     $condition_status = $_POST['condition_status'];
+    $image_path       = null;
 
-    try {
-        $stmt = $pdo->prepare("
-            INSERT INTO equipment (name, categoryID, description, daily_rate, total_quantity, available_quantity, condition_status, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, 'available')
-        ");
-        $stmt->execute([$name, $category_id, $description, $daily_rate, $total_quantity, $total_quantity, $condition_status]);
-        $message = "Equipment added successfully!";
-    } catch (PDOException $e) {
-        $error = "Failed to add equipment: " . $e->getMessage();
+
+    if (isset($_FILES['image']) && $_FILES['image']['error'] === UPLOAD_ERR_OK) {
+        $allowed_types = ['image/jpeg', 'image/png', 'image/webp', 'image/gif'];
+        $max_size      = 2 * 1024 * 1024;
+        $file_type     = mime_content_type($_FILES['image']['tmp_name']);
+        $file_size     = $_FILES['image']['size'];
+
+        if (!in_array($file_type, $allowed_types)) {
+            $error = "Invalid image type. Please upload a JPG, PNG, WEBP or GIF.";
+        } elseif ($file_size > $max_size) {
+            $error = "Image too large. Maximum size is 2MB.";
+        } else {
+
+            $upload_dir = 'images/equipment/';
+            if (!is_dir($upload_dir)) {
+                mkdir($upload_dir, 0755, true);
+            }
+
+
+            $ext        = pathinfo($_FILES['image']['name'], PATHINFO_EXTENSION);
+            $filename   = strtolower(preg_replace('/[^a-zA-Z0-9]/', '-', $name))
+                          . '-' . time() . '.' . $ext;
+            $dest       = $upload_dir . $filename;
+
+            if (move_uploaded_file($_FILES['image']['tmp_name'], $dest)) {
+                $image_path = $dest;
+            } else {
+                $error = "Failed to save image. Check folder permissions on images/equipment/.";
+            }
+        }
+    }
+
+    if (empty($error)) {
+        try {
+            $stmt = $pdo->prepare("
+                INSERT INTO equipment (name, categoryID, description, daily_rate, total_quantity, available_quantity, condition_status, status, image)
+                VALUES (?, ?, ?, ?, ?, ?, ?, 'available', ?)
+            ");
+            $stmt->execute([$name, $category_id, $description, $daily_rate, $total_quantity, $total_quantity, $condition_status, $image_path]);
+            $message = "Equipment added successfully!";
+        } catch (PDOException $e) {
+            $error = "Failed to add equipment: " . $e->getMessage();
+        }
     }
 }
 
@@ -41,7 +76,8 @@ if (isset($_POST['update_equipment'])) {
     $daily_rate       = $_POST['daily_rate'];
     $total_quantity   = $_POST['total_quantity'];
     $condition_status = $_POST['condition_status'];
-    $status           = $_POST['status'];
+
+    $status = !empty($_POST['status_override']) ? $_POST['status_override'] : $_POST['status'];
 
     try {
         $stmt = $pdo->prepare("
@@ -50,7 +86,6 @@ if (isset($_POST['update_equipment'])) {
             WHERE equipment_id=?
         ");
         $stmt->execute([$name, $category_id, $description, $daily_rate, $total_quantity, $condition_status, $status, $equipment_id]);
-
 
         $stmt2 = $pdo->prepare("
             UPDATE equipment
@@ -76,7 +111,10 @@ if (isset($_GET['delete_equipment'])) {
         $active_rentals = $stmt->fetchColumn();
 
         if ($active_rentals > 0) {
-            $error = "Cannot delete equipment with active rentals. Set status to Maintenance instead.";
+
+            $stmt = $pdo->prepare("UPDATE equipment SET status = 'maintenance' WHERE equipment_id = ?");
+            $stmt->execute([$equipment_id]);
+            $message = "Equipment has active rentals and cannot be deleted. It has been automatically set to Maintenance and hidden from users.";
         } else {
             $stmt = $pdo->prepare("DELETE FROM equipment WHERE equipment_id = ?");
             $stmt->execute([$equipment_id]);
@@ -84,6 +122,45 @@ if (isset($_GET['delete_equipment'])) {
         }
     } catch (PDOException $e) {
         $error = "Failed to delete equipment: " . $e->getMessage();
+    }
+}
+
+
+if (isset($_POST['add_user'])) {
+    $firstname      = trim($_POST['new_firstname']);
+    $lastname       = trim($_POST['new_lastname']);
+    $email          = trim($_POST['new_email']);
+    $phone          = trim($_POST['new_phone']);
+    $dob            = $_POST['new_dob'];
+    $role           = $_POST['new_role'];
+    $account_status = $_POST['new_account_status'];
+    $password       = $_POST['new_password'];
+
+    if (empty($firstname) || empty($lastname) || empty($email) || empty($password)) {
+        $error = "First name, last name, email and password are required.";
+    } elseif (strlen($password) < 8) {
+        $error = "Password must be at least 8 characters.";
+    } elseif (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
+        $error = "Invalid email address.";
+    } else {
+        try {
+
+            $check = $pdo->prepare("SELECT user_id FROM users WHERE email = ?");
+            $check->execute([$email]);
+            if ($check->fetch()) {
+                $error = "That email address is already registered.";
+            } else {
+                $hashed = password_hash($password, PASSWORD_DEFAULT);
+                $stmt   = $pdo->prepare("
+                    INSERT INTO users (firstname, lastname, email, password_hash, phone, DOB, role, account_status)
+                    VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+                ");
+                $stmt->execute([$firstname, $lastname, $email, $hashed, $phone, $dob ?: null, $role, $account_status]);
+                $message = "User '{$firstname} {$lastname}' created successfully!";
+            }
+        } catch (PDOException $e) {
+            $error = "Failed to create user: " . $e->getMessage();
+        }
     }
 }
 
@@ -129,11 +206,13 @@ if (isset($_GET['delete_user'])) {
     }
 }
 
+
 $equipment  = $pdo->query("
-    SELECT e.*, ec.category_name
+    SELECT e.*, ec.category_name,
+           (e.total_quantity - e.available_quantity) AS rented_count
     FROM equipment e
     JOIN equipment_categories ec ON e.categoryID = ec.category_id
-    ORDER BY e.equipment_id DESC
+    ORDER BY ec.category_name, e.name
 ")->fetchAll();
 
 $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_name")->fetchAll();
@@ -158,8 +237,8 @@ $stats = $pdo->query("
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
     <link href="css/style.css" rel="stylesheet">
-</head>
 
+</head>
 <body class="admin-page">
 
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
@@ -196,6 +275,7 @@ $stats = $pdo->query("
                 <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
             </div>
         <?php endif; ?>
+
 
         <div class="row mb-4">
             <div class="col-md-2">
@@ -242,6 +322,7 @@ $stats = $pdo->query("
             </div>
         </div>
 
+
         <ul class="nav nav-tabs mb-4">
             <li class="nav-item">
                 <a class="nav-link <?php echo $active_tab == 'equipment' ? 'active' : ''; ?>" href="?tab=equipment">
@@ -263,12 +344,13 @@ $stats = $pdo->query("
 
         <?php if ($active_tab == 'equipment'): ?>
 
+
             <div class="card mb-4">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="fas fa-plus-circle me-2"></i>Add New Equipment</h5>
                 </div>
                 <div class="card-body">
-                    <form method="POST" class="row g-3" id="addEquipmentForm">
+                    <form method="POST" enctype="multipart/form-data" class="row g-3" id="addEquipmentForm">
                         <div class="col-md-3">
                             <input type="text" class="form-control" name="name" placeholder="Equipment Name" required>
                             <small id="name_error" class="text-danger" style="display:none;"></small>
@@ -302,6 +384,21 @@ $stats = $pdo->query("
                                 <option value="fair">Fair</option>
                             </select>
                         </div>
+                        <div class="col-md-4">
+                            <label class="form-label">Equipment Image <small class="text-muted">(JPG/PNG/WEBP, max 2MB)</small></label>
+                            <input type="file" class="form-control" name="image"
+                                   accept="image/jpeg,image/png,image/webp,image/gif"
+                                   id="imageInput">
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center">
+
+                            <div id="imagePreview" style="display:none;">
+                                <img id="previewImg" src="" alt="Preview"
+                                     style="height:80px; border-radius:8px;
+                                            object-fit:cover; border:2px solid #667eea;">
+                                <small class="text-muted ms-2" id="previewName"></small>
+                            </div>
+                        </div>
                         <div class="col-md-12">
                             <button type="submit" name="add_equipment" class="btn btn-primary">
                                 <i class="fas fa-plus me-1"></i>Add Equipment
@@ -310,6 +407,7 @@ $stats = $pdo->query("
                     </form>
                 </div>
             </div>
+
 
             <div class="card">
                 <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
@@ -327,15 +425,15 @@ $stats = $pdo->query("
                     <table class="table table-hover align-middle">
                         <thead class="table-dark">
                             <tr>
+                                <th>Image</th>
                                 <th>ID</th>
                                 <th>Name</th>
                                 <th>Category</th>
                                 <th>Description</th>
                                 <th>£/Day</th>
-                                <th>Total</th>
-                                <th>Available</th>
+                                <th>Total Qty</th>
                                 <th>Condition</th>
-                                <th>Status</th>
+                                <th>Stock Status</th>
                                 <th>Actions</th>
                             </tr>
                         </thead>
@@ -349,6 +447,20 @@ $stats = $pdo->query("
                             <tr>
                                 <form method="POST">
                                     <input type="hidden" name="equipment_id" value="<?php echo $item['equipment_id']; ?>">
+                                    <td>
+                                        <?php if (!empty($item['image'])): ?>
+                                            <img src="<?php echo htmlspecialchars($item['image']); ?>"
+                                                 alt="<?php echo htmlspecialchars($item['name']); ?>"
+                                                 style="height:50px; width:70px; object-fit:cover; border-radius:6px;"
+                                                 onerror="this.src=''; this.style.display='none';">
+                                        <?php else: ?>
+                                            <div style="height:50px; width:70px; background:#e9ecef;
+                                                        border-radius:6px; display:flex; align-items:center;
+                                                        justify-content:center; color:#adb5bd; font-size:0.7rem;">
+                                                No image
+                                            </div>
+                                        <?php endif; ?>
+                                    </td>
                                     <td><?php echo $item['equipment_id']; ?></td>
                                     <td><input type="text" name="name" value="<?php echo htmlspecialchars($item['name']); ?>" class="form-control form-control-sm" required></td>
                                     <td>
@@ -364,7 +476,6 @@ $stats = $pdo->query("
                                     <td><input type="text" name="description" value="<?php echo htmlspecialchars($item['description'] ?? ''); ?>" class="form-control form-control-sm"></td>
                                     <td><input type="number" name="daily_rate" value="<?php echo $item['daily_rate']; ?>" class="form-control form-control-sm" step="0.01" min="0"></td>
                                     <td><input type="number" name="total_quantity" value="<?php echo $item['total_quantity']; ?>" class="form-control form-control-sm" min="1"></td>
-                                    <td class="text-center"><?php echo $item['available_quantity']; ?></td>
                                     <td>
                                         <select name="condition_status" class="form-select form-select-sm">
                                             <option value="new"  <?php echo $item['condition_status'] == 'new'  ? 'selected' : ''; ?>>New</option>
@@ -373,10 +484,44 @@ $stats = $pdo->query("
                                         </select>
                                     </td>
                                     <td>
-                                        <select name="status" class="form-select form-select-sm">
-                                            <option value="available"   <?php echo $item['status'] == 'available'   ? 'selected' : ''; ?>>Available</option>
-                                            <option value="rented"      <?php echo $item['status'] == 'rented'      ? 'selected' : ''; ?>>Rented</option>
-                                            <option value="maintenance" <?php echo $item['status'] == 'maintenance' ? 'selected' : ''; ?>>Maintenance</option>
+                                        <?php
+                                        $avail  = (int)$item['available_quantity'];
+                                        $rented = (int)$item['rented_count'];
+                                        $total  = (int)$item['total_quantity'];
+                                        $st     = $item['status'];
+                                        ?>
+                                        <?php if ($st === 'maintenance'): ?>
+                                            <span class="status-badge status-maintenance">
+                                                <i class="fas fa-tools me-1"></i>Maintenance
+                                            </span>
+                                        <?php else: ?>
+                                            <div style="font-size:0.82rem; line-height:1.7;">
+                                                <div>
+                                                    <span class="badge bg-success">
+                                                        <?php echo $avail; ?> available
+                                                    </span>
+                                                </div>
+                                                <?php if ($rented > 0): ?>
+                                                <div>
+                                                    <span class="badge bg-warning text-dark">
+                                                        <?php echo $rented; ?> out on rent
+                                                    </span>
+                                                </div>
+                                                <?php endif; ?>
+                                                <div class="text-muted" style="font-size:0.75rem;">
+                                                    <?php echo $total; ?> total
+                                                </div>
+                                            </div>
+
+                                            <input type="hidden" name="status"
+                                                   value="<?php echo htmlspecialchars($st); ?>">
+                                        <?php endif; ?>
+
+                                        <select name="status_override" class="form-select form-select-sm mt-1"
+                                                onchange="if(this.value) { this.previousElementSibling.value=this.value; this.closest('form').submit(); }">
+                                            <option value="">Change status...</option>
+                                            <option value="available">Set Available</option>
+                                            <option value="maintenance">Set Maintenance</option>
                                         </select>
                                     </td>
                                     <td class="table-actions">
@@ -404,8 +549,71 @@ $stats = $pdo->query("
 
         <?php endif; ?>
 
-       
+
         <?php if ($active_tab == 'users'): ?>
+
+
+            <div class="card mb-4">
+                <div class="card-header">
+                    <h5 class="mb-0"><i class="fas fa-user-plus me-2"></i>Add New User</h5>
+                </div>
+                <div class="card-body">
+                    <form method="POST" class="row g-3" id="addUserForm">
+                        <div class="col-md-2">
+                            <label class="form-label">First Name *</label>
+                            <input type="text" class="form-control" name="new_firstname"
+                                   placeholder="First name" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Last Name *</label>
+                            <input type="text" class="form-control" name="new_lastname"
+                                   placeholder="Last name" required>
+                        </div>
+                        <div class="col-md-3">
+                            <label class="form-label">Email Address *</label>
+                            <input type="email" class="form-control" name="new_email"
+                                   placeholder="email@example.com" required>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Phone</label>
+                            <input type="text" class="form-control" name="new_phone"
+                                   placeholder="07700 000000">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Date of Birth</label>
+                            <input type="date" class="form-control" name="new_dob">
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Password *</label>
+                            <input type="password" class="form-control" name="new_password"
+                                   placeholder="Min 8 characters" required minlength="8">
+                            <small class="text-muted">Min 8 characters</small>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Role *</label>
+                            <select class="form-select" name="new_role" required>
+                                <option value="user">User</option>
+                                <option value="admin">Admin</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <label class="form-label">Account Status *</label>
+                            <select class="form-select" name="new_account_status" required>
+                                <option value="active">Active</option>
+                                <option value="suspended">Suspended</option>
+                                <option value="inactive">Inactive</option>
+                            </select>
+                        </div>
+                        <div class="col-md-12">
+                            <button type="submit" name="add_user" class="btn btn-primary">
+                                <i class="fas fa-user-plus me-1"></i>Create User
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+
             <div class="card">
                 <div class="card-header">
                     <h5 class="mb-0"><i class="fas fa-users me-2"></i>User Management (<?php echo count($users); ?> users)</h5>
@@ -467,6 +675,7 @@ $stats = $pdo->query("
                 </div>
             </div>
         <?php endif; ?>
+
 
         <?php if ($active_tab == 'rentals'): ?>
             <div class="card">
@@ -542,94 +751,5 @@ $stats = $pdo->query("
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
 
-    <script>
-        const equipmentSearch = document.getElementById('equipmentSearch');
-        if (equipmentSearch) {
-            equipmentSearch.addEventListener('input', function () {
-                const query = this.value.toLowerCase().trim();
-                const rows  = document.querySelectorAll('#equipmentTableBody tr');
-                let visibleCount = 0;
-
-                rows.forEach(function (row) {
-
-                    const inputs   = row.querySelectorAll('input[type="text"], input[type="number"]');
-                    const selects  = row.querySelectorAll('select');
-                    let   rowText  = '';
-
-                    inputs.forEach(function (input) {
-                        rowText += ' ' + input.value.toLowerCase();
-                    });
-                    selects.forEach(function (select) {
-                        rowText += ' ' + select.options[select.selectedIndex].text.toLowerCase();
-                    });
-
-                    if (rowText.includes(query)) {
-                        row.style.display = '';
-                        visibleCount++;
-                    } else {
-                        row.style.display = 'none';
-                    }
-                });
-
-               
-                const noResults = document.getElementById('noSearchResults');
-                if (noResults) {
-                    noResults.style.display = visibleCount === 0 ? '' : 'none';
-                }
-                
-                const counter = document.getElementById('searchResultCount');
-                if (counter) {
-                    counter.textContent = query === ''
-                        ? ''
-                        : visibleCount + ' result' + (visibleCount !== 1 ? 's' : '');
-                }
-            });
-        }
-
-
-        const addEquipmentForm = document.getElementById('addEquipmentForm');
-        if (addEquipmentForm) {            
-            function validateField(field) {
-                const errorEl = document.getElementById(field.name + '_error');
-                let   message = '';
-
-                if (field.hasAttribute('required') && field.value.trim() === '') {
-                    message = 'This field is required.';
-                } else if (field.type === 'number') {
-                    const val = parseFloat(field.value);
-                    if (isNaN(val) || val <= 0) {
-                        message = 'Please enter a value greater than 0.';
-                    }
-                }
-
-                if (errorEl) {
-                    errorEl.textContent = message;
-                    errorEl.style.display = message ? 'block' : 'none';
-                }
-                field.classList.toggle('is-invalid', message !== '');
-                field.classList.toggle('is-valid',   message === '' && field.value.trim() !== '');
-                return message === '';
-            }
-
-            
-            addEquipmentForm.querySelectorAll('input, select').forEach(function (field) {
-                field.addEventListener('blur',  function () { validateField(this); });
-                field.addEventListener('input', function () { validateField(this); });
-            });
-
-            
-            addEquipmentForm.addEventListener('submit', function (e) {
-                let valid = true;
-                this.querySelectorAll('input, select').forEach(function (field) {
-                    if (!validateField(field)) valid = false;
-                });
-                if (!valid) {
-                    e.preventDefault();                    
-                    const firstInvalid = addEquipmentForm.querySelector('.is-invalid');
-                    if (firstInvalid) firstInvalid.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                }
-            });
-        }
-    </script>
 </body>
 </html>
