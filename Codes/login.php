@@ -1,5 +1,4 @@
 <?php
-ob_start();
 session_start();
 require_once 'config.php';
 if (isset($_SESSION['role'])) {
@@ -42,10 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                     $_SESSION['email'] = $user['email'];
                     $_SESSION['role'] = $user['role'];
                     
-                    
-                    // $update = $pdo->prepare("UPDATE users SET last_login = NOW() WHERE user_id = ?");
-                    // $update->execute([$user['user_id']]);
-                    
+                                     
                     if ($user['role'] == 'admin') {
                         header("Location: admin-dashboard.php");
                     } else {
@@ -71,122 +67,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <title>Login - ZaramOUTFITTERS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <style>
-        body {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2  100%);
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-        }
-        .login-container {
-            max-width: 450px;
-            width: 90%;
-            margin: 20px auto;
-        }
-        .card {
-            border: none;
-            border-radius: 15px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.2);
-            overflow: hidden;
-        }
-        .card-header {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            padding: 30px 20px;
-            text-align: center;
-            border-bottom: none;
-        }
-        .card-header h2 {
-            margin: 0;
-            font-size: 2rem;
-            font-weight: 700;
-        }
-        .card-header p {
-            margin: 10px 0 0;
-            opacity: 0.9;
-        }
-        .card-body {
-            padding: 40px 30px;
-            background: white;
-        }
-        .form-label {
-            font-weight: 500;
-            color: #495057;
-            margin-bottom: 8px;
-        }
-        .input-group-text {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            color: white;
-            border: none;
-            padding: 12px 15px;
-        }
-        .form-control {
-            border: 2px solid #e1e5e9;
-            border-left: none;
-            padding: 12px 15px;
-            font-size: 1rem;
-            transition: all 0.3s;
-        }
-        .form-control:focus {
-            border-color: #667eea;
-            box-shadow: none;
-        }
-        .btn-login {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            border: none;
-            padding: 14px;
-            font-weight: 600;
-            font-size: 1.1rem;
-            color: white;
-            width: 100%;
-            border-radius: 8px;
-            margin-top: 20px;
-            transition: transform 0.3s, box-shadow 0.3s;
-        }
-        .btn-login:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
-            color: white;
-        }
-        .role-select {
-            margin: 20px 0;
-        }
-        .role-select .form-check {
-            display: inline-block;
-            margin-right: 20px;
-        }
-        .alert {
-            border-radius: 8px;
-            padding: 15px;
-            margin-bottom: 25px;
-        }
-        .brand-icon {
-            font-size: 3rem;
-            margin-bottom: 15px;
-        }
-        .register-link {
-            text-align: center;
-            margin-top: 25px;
-            padding-top: 20px;
-            border-top: 1px solid #e1e5e9;
-        }
-        .register-link a {
-            color: #667eea;
-            font-weight: 600;
-            text-decoration: none;
-        }
-        .register-link a:hover {
-            color: #764ba2;
-            text-decoration: underline;
-        }
-    </style>
+    <link href="css/style.css" rel="stylesheet">
+    
 </head>
 <body>
     <div class="login-container">
-        <div class="card">
-            <div class="card-header">
+        <div class="login-card">
+            <div class="login-card-header">
                 <div class="brand-icon">
                     <i class="fas fa-mountain"></i>
                 </div>
