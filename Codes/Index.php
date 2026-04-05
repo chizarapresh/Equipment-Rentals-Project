@@ -1,17 +1,5 @@
 <?php
-ob_start();
 session_start();
-
-if (isset($_SESSION['role'])) {
-
-    if ($_SESSION['role'] == "user") {
-        header("Location: user-dashboard.php");
-        exit();
-    } elseif ($_SESSION['role'] == "admin") {
-        header("Location: admin-dashboard.php");
-        exit();
-    }
-}
 
 require_once 'config.php';
 ?>
@@ -27,10 +15,9 @@ require_once 'config.php';
     <link href="css/style.css" rel="stylesheet">
 	
 
-    
 </head>
 
-<body>
+<index.body>
     <header class="site-header">
         <div class="container">
 
@@ -58,6 +45,8 @@ require_once 'config.php';
                      class="logo-img">
 
             </div>
+
+        
             
             <a class="navbar-brand"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
@@ -94,37 +83,26 @@ require_once 'config.php';
                     <input class="form-control me-2" type="search" name="search" placeholder="Search equipment...">
                     <button class="btn btn-outline-light" type="submit"><i class="fas fa-search"></i></button>
                 </form>
-                
+                            
                 
                 <ul class="navbar-nav ms-auto mb-2 mb-lg-0">
                     <li class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
-                            <i class="fas fa-user-circle me-1"></i> Account
-                        </a>
-                        <?php 
-                            if(isset($_SESSION['user_name'])) {
-                                echo $_SESSION['user_name'];
-                            } else {
-                                echo "Account";
-                            }
-                        ?>
-                    
-                        
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" 
+                        role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                        <i class="fas fa-user-circle me-1"></i>
+                        <?php echo isset($_SESSION['user_name']) ? $_SESSION['user_name'] : 'Account'; ?></a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <?php if(isset($_SESSION['user_name'])): ?>
-                                <li><h6 class="dropdown-header">Welcome, <?php echo $_SESSION['user_name']; ?>!</h6></li>
-                                <li><a class="dropdown-item" href="dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
-                                <li><a class="dropdown-item" href="my-rentals.php"><i class="fas fa-clipboard-list"></i> My Rentals</a></li>
-                                <li><a class="dropdown-item" href="profile.php"><i class="fas fa-cog"></i> Settings</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item text-danger" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
-                            <?php else: ?>
-                                <li><h6 class="dropdown-header">Welcome, Guest!</h6></li>
-                                <li><a class="dropdown-item" href="login.php"><i class="fas fa-sign-in-alt"></i> Login</a></li>
-                                <li><a class="dropdown-item" href="register.php"><i class="fas fa-user-plus"></i> Register</a></li>
-                                <li><hr class="dropdown-divider"></li>
-                                <li><a class="dropdown-item" href="support.php"><i class="fas fa-headset"></i> Support</a></li>
-                            <?php endif; ?>
+                                <li><h6 class="dropdown-header">Welcome, <?php echo htmlspecialchars($_SESSION['user_name']); ?>!</h6></li>
+                                <li><a class="dropdown-item" href="user-dashboard.php"><i class="fas fa-tachometer-alt"></i> Dashboard</a></li>
+                                <li><a class="dropdown-item" href="logout.php"><i class="fas fa-sign-out-alt"></i> Logout</a></li>
+                                <?php else: ?>
+                                    <li><a class="dropdown-item" href="login.php"><i class="fas fa-sign-in-alt"></i> Login</a></li>
+                                    <li><a class="dropdown-item" href="register.php"><i class="fas fa-user-plus"></i> Register</a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    <li><a class="dropdown-item" href="support.php"><i class="fas fa-headset"></i> Support</a></li>
+                                <?php endif; 
+                            ?>
                         </ul>
                     </li>
                 </ul>
@@ -134,8 +112,8 @@ require_once 'config.php';
 
     
     <main class="container my-5">
-        <h2>Welcome to ZaramOUTFITTERS</h2>
-        <p>Your adventure equipment rental specialist! Browse our selection of water sports, hiking, camping gear, and transportation options.</p>
+        <h2 class="text-white">Welcome to ZaramOUTFITTERS</h2>
+        <p class="text-white">Your adventure equipment rental specialist! Browse our selection of water sports, hiking, camping gear, and transportation options.</p>
         <?php if(isset($_SESSION['user_name'])): ?>
             <div class="alert alert-success mt-3">
                 Welcome back, <?php echo $_SESSION['user_name']; ?>! Ready for your next adventure?
@@ -147,8 +125,8 @@ require_once 'config.php';
     <div class="container">
 
         <div class="text-center mb-5">
-            <h2 class="display-4 fw-bold">HOW IT <span class="text-primary">WORKS</span></h2>
-            <p class="lead text-muted">Four simple steps to your next outdoor experience</p>
+            <h2 class="display-4 fw-bold text-white">HOW IT <span class="text-primary">WORKS</span></h2>
+            <p class="lead text-white">Four simple steps to your next outdoor experience</p>
         </div>
         
  
@@ -243,6 +221,6 @@ require_once 'config.php';
 </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</body>
+</index.body>
 
 </html>
