@@ -13,46 +13,6 @@ $condition = $_GET['condition'] ?? '';
 $message   = '';
 $error     = '';
 
-if (isset($_GET['rent_id'])) {
-    try {
-        $pdo->beginTransaction();
-        $equipment_id = $_GET['rent_id'];
-        $user_id      = $_SESSION['user_id'];
-
-        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM rentals WHERE user_id = ? AND status IN ('rented', 'overdue')");
-        $stmt->execute([$user_id]);
-        $rental_count = $stmt->fetch()['count'];
-
-        if ($rental_count >= 3) {
-            $pdo->rollBack();
-            $error = "You have reached the maximum limit of 3 active rentals.";
-        } else {
-            $stmt = $pdo->prepare("SELECT * FROM equipment WHERE equipment_id = ? AND status = 'available'");
-            $stmt->execute([$equipment_id]);
-            $equipment = $stmt->fetch();
-
-            if ($equipment) {
-                $due_date = date('Y-m-d', strtotime('+7 days'));
-
-                $insert = $pdo->prepare("INSERT INTO rentals (user_id, equipment_id, rental_date, due_date, status) VALUES (?, ?, NOW(), ?, 'rented')");
-                $insert->execute([$user_id, $equipment_id, $due_date]);
-
-                $update = $pdo->prepare("UPDATE equipment SET status = 'rented' WHERE equipment_id = ?");
-                $update->execute([$equipment_id]);
-
-                $pdo->commit();
-                $message = "Equipment rented successfully! Due date: " . date('M d, Y', strtotime($due_date));
-            } else {
-                $pdo->rollBack();
-                $error = "Equipment is not available.";
-            }
-        }
-    } catch (PDOException $e) {
-        $pdo->rollBack();
-        $error = "Rental failed: " . $e->getMessage();
-    }
-}
-
 
 if (isset($_GET['return_id'])) {
     try {
@@ -67,7 +27,13 @@ if (isset($_GET['return_id'])) {
             $update = $pdo->prepare("UPDATE rentals SET status = 'returned', return_date = NOW() WHERE rental_id = ?");
             $update->execute([$rental_id]);
 
-            $update_equip = $pdo->prepare("UPDATE equipment SET status = 'available' WHERE equipment_id = ?");
+
+            $update_equip = $pdo->prepare("
+                UPDATE equipment
+                SET available_quantity = available_quantity + 1,
+                    status = CASE WHEN status = 'rented' THEN 'available' ELSE status END
+                WHERE equipment_id = ?
+            ");
             $update_equip->execute([$rental['equipment_id']]);
 
             $pdo->commit();
@@ -83,7 +49,50 @@ if (isset($_GET['return_id'])) {
 }
 
 
+if (isset($_GET['rent_id'])) {
+    try {
+        $pdo->beginTransaction();
+        $equipment_id = $_GET['rent_id'];
+        $user_id      = $_SESSION['user_id'];
 
+        $stmt = $pdo->prepare("SELECT COUNT(*) as count FROM rentals WHERE user_id = ? AND status IN ('rented', 'overdue')");
+        $stmt->execute([$user_id]);
+        $rental_count = $stmt->fetch()['count'];
+
+        if ($rental_count >= 3) {
+            $pdo->rollBack();
+            $error = "You have reached the maximum limit of 3 active rentals.";
+        } else {
+
+            $stmt = $pdo->prepare("SELECT * FROM equipment WHERE equipment_id = ? AND status = 'available' AND available_quantity > 0");
+            $stmt->execute([$equipment_id]);
+            $equipment = $stmt->fetch();
+
+            if ($equipment) {
+                $due_date = date('Y-m-d', strtotime('+4 days'));
+                $new_qty  = (int)$equipment['available_quantity'] - 1;
+
+
+                $insert = $pdo->prepare("INSERT INTO rentals (user_id, equipment_id, rental_date, due_date, status) VALUES (?, ?, NOW(), ?, 'rented')");
+                $insert->execute([$user_id, $equipment_id, $due_date]);
+
+
+                $new_status = ($new_qty <= 0) ? 'rented' : 'available';
+                $update = $pdo->prepare("UPDATE equipment SET available_quantity = ?, status = ? WHERE equipment_id = ?");
+                $update->execute([$new_qty, $new_status, $equipment_id]);
+
+                $pdo->commit();
+                $message = "Equipment rented successfully! Due date: " . date('M d, Y', strtotime($due_date));
+            } else {
+                $pdo->rollBack();
+                $error = "Sorry, this equipment is no longer available.";
+            }
+        }
+    } catch (PDOException $e) {
+        $pdo->rollBack();
+        $error = "Rental failed: " . $e->getMessage();
+    }
+}
 
 
 try {
@@ -116,7 +125,7 @@ $stmt = $pdo->prepare("
 $stmt->execute([$_SESSION['user_id']]);
 $rental_history = $stmt->fetchAll();
 
-// Build equipment query - only available equipment
+
 $sql    = "SELECT e.*, ec.category_name
            FROM equipment e
            JOIN equipment_categories ec ON e.categoryID = ec.category_id
@@ -152,23 +161,82 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
     <title>User Dashboard - ZaramOUTFITTERS</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
-    <link href="css/style.css" rel="stylesheet">
-
+    <link rel="stylesheet" href="css/style.css">
 
 </head>
 <body class="page-user">
 
+    <header class="site-header">
+        <div class="container">
+
+                    <div>
+                        <h1 class="site-title">
+                            Zaram<span>O</span>UTFITTERS
+                        </h1>
+                        <p class="tagline">
+                            Adventure <span>Answered!!!</span>
+                        </p>
+                    </div>
+        
+        </div>
+
+    </header>
+
+
+
+    
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
-            <a class="navbar-brand" href="index.php">ZaramOUTFITTERS</a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+            <div class="logo-section">
+                <img src="images/logo.png" href="index.php"
+                     
+                     class="logo-img">
+
+            </div>
+
+        
+            
+            <a class="navbar-brand"></a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
                 <span class="navbar-toggler-icon"></span>
             </button>
+            
+            
+            <div class="collapse navbar-collapse" id="navbarMain">
+                
+                <ul class="navbar-nav me-auto ">
+                    <li class="nav-item">
+                        <a class="nav-link" href="index.php">HOME</a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="browseDropdown" role="button" data-bs-toggle="dropdown">
+                            BROWSE
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="browse.php?category=101"><i class="fas fa-water"></i> Water Sports</a></li>
+                            <li><a class="dropdown-item" href="browse.php?category=102"><i class="fas fa-campground"></i> Camping/Hiking</a></li>
+                            <li><a class="dropdown-item" href="browse.php?category=103"><i class="fas fa-bicycle"></i> Transportation</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="about.php">ABOUT</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="contact.php">CONTACT US</a>
+                    </li>
+                </ul>
+                
+             
+                <form class="d-flex me-3" action="browse.php" method="get">
+                    <input class="form-control me-2" type="search" name="search" placeholder="Search equipment..."
+                    value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
+                    <button class="btn btn-outline-light" type="submit"><i class="fas fa-search"></i></button>
+                </form>
             <div class="collapse navbar-collapse" id="navbarNav">
                 <ul class="navbar-nav ms-auto">
                     <li class="nav-item dropdown">
                         <a class="nav-link dropdown-toggle" href="#" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle text-white"></i><?php echo htmlspecialchars($_SESSION['firstname']); ?>
+                            <i class="fas fa-user-circle"></i> <?php echo htmlspecialchars($_SESSION['firstname']); ?>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="profile.php"><i class="fas fa-user me-2"></i>Profile</a></li>
@@ -187,6 +255,7 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
             <p class="lead">Manage your rentals and find new adventures.</p>
         </div>
     </div>
+
 
     <div class="container mb-5">
 
@@ -239,7 +308,7 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="search-tab" data-bs-toggle="tab" data-bs-target="#search" type="button" role="tab">
                     <i class="fas fa-search me-2"></i>Browse & Rent Equipment
-                </button> 
+                </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link" id="history-tab" data-bs-toggle="tab" data-bs-target="#history" type="button" role="tab">
@@ -303,8 +372,19 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
             <div class="tab-pane fade" id="search" role="tabpanel">
                 <h3 class="mb-4">Find Equipment to Rent</h3>
 
+
+                <div class="input-group mb-3">
+                    <span class="input-group-text bg-primary text-white">
+                        <i class="fas fa-search"></i>
+                    </span>
+                    <input type="text" id="liveEquipmentSearch"
+                           class="form-control"
+                           placeholder="Instantly filter equipment by name or category...">
+                    <span class="input-group-text bg-white text-muted" id="liveSearchCount"></span>
+                </div>
+
                 <div class="filter-section">
-                    <form method="GET" class="row g-3">
+                    <form method="GET" action="browse.php" class="row g-3">
                         <div class="col-md-4">
                             <label class="form-label">Search</label>
                             <input type="text" class="form-control" name="search"
@@ -343,7 +423,9 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
                 <div class="row">
                     <?php if (count($available_equipment) > 0): ?>
                         <?php foreach ($available_equipment as $item): ?>
-                            <div class="col-md-6 col-lg-4 mb-4">
+                            <div class="col-md-6 col-lg-4 mb-4 equipment-card-wrapper"
+                                 data-name="<?php echo htmlspecialchars(strtolower($item['name'])); ?>"
+                                 data-category="<?php echo htmlspecialchars(strtolower($item['category_name'])); ?>">
                                 <div class="card equipment-card">
                                     <div class="card-body">
                                         <?php
@@ -370,7 +452,7 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
                                             </div>
                                             <a href="?rent_id=<?php echo $item['equipment_id']; ?>"
                                                class="btn btn-rent"
-                                               onclick="return confirm('Rent this equipment for 7 days?')">
+                                               onclick="return confirm('Rent this equipment for 4 days?')">
                                                 <i class="fas fa-hand-holding-heart me-1"></i>Rent
                                             </a>
                                         </div>
@@ -431,5 +513,61 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script>
+        const liveSearch = document.getElementById('liveEquipmentSearch');
+        if (liveSearch) {
+            liveSearch.addEventListener('input', function () {
+                const query = this.value.toLowerCase().trim();
+                const cards = document.querySelectorAll('.equipment-card-wrapper');
+                let   visible = 0;
+
+                cards.forEach(function (card) {
+                    const name     = (card.dataset.name     || '').toLowerCase();
+                    const category = (card.dataset.category || '').toLowerCase();
+                    const matches  = name.includes(query) || category.includes(query);
+                    card.style.display = matches ? '' : 'none';
+                    if (matches) visible++;
+                });
+
+                const badge = document.getElementById('liveSearchCount');
+                if (badge) {
+                    badge.textContent = query === ''
+                        ? ''
+                        : visible + ' item' + (visible !== 1 ? 's' : '') + ' found';
+                }
+            });
+        }
+
+        document.querySelectorAll('.btn-rent').forEach(function (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const name    = this.closest('.card').querySelector('.card-title').textContent.trim();
+                const dueDate = new Date();
+                dueDate.setDate(dueDate.getDate() + 4);
+                const formatted = dueDate.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
+                const confirmed = confirm(
+                    'Rent "' + name + '" for 4 days?\n\nDue back by: ' + formatted
+                );
+                if (confirmed) window.location.href = this.href;
+            });
+        });
+
+        const tabLinks = document.querySelectorAll('#dashboardTabs button[data-bs-toggle="tab"]');
+
+        const savedTab = sessionStorage.getItem('activeUserTab');
+        if (savedTab) {
+            const tabToShow = document.querySelector('#dashboardTabs button[data-bs-target="' + savedTab + '"]');
+            if (tabToShow) {
+                new bootstrap.Tab(tabToShow).show();
+            }
+        }
+
+        tabLinks.forEach(function (tab) {
+            tab.addEventListener('shown.bs.tab', function (e) {
+                sessionStorage.setItem('activeUserTab', e.target.dataset.bsTarget);
+            });
+        });
+    </script>
 </body>
 </html>
