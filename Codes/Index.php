@@ -17,7 +17,7 @@ require_once 'config.php';
 
 </head>
 
-<index.body>
+<body>
     <header class="site-header">
         <div class="container">
 
@@ -34,8 +34,6 @@ require_once 'config.php';
 
     </header>
 
-
-
     
     <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
         <div class="container">
@@ -44,9 +42,7 @@ require_once 'config.php';
                      
                      class="logo-img">
 
-            </div>
-
-        
+            </div>        
             
             <a class="navbar-brand"></a>
             <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarMain">
@@ -65,9 +61,9 @@ require_once 'config.php';
                             BROWSE
                         </a>
                         <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="water-sports.php"><i class="fas fa-water"></i>Water Sports</a></li>
-                            <li><a class="dropdown-item" href="camping.php"><i class="fas fa-campground"></i>Camping/Hiking</a></li>
-                            <li><a class="dropdown-item" href="transportation.php"><i class="fas fa-bicycle"></i>Transportation</a></li>
+                            <li><a class="dropdown-item" href="browse.php?category=101"><i class="fas fa-water"></i> Water Sports</a></li>
+                            <li><a class="dropdown-item" href="browse.php?category=102"><i class="fas fa-campground"></i> Camping/Hiking</a></li>
+                            <li><a class="dropdown-item" href="browse.php?category=103"><i class="fas fa-bicycle"></i> Transportation</a></li>
                         </ul>
                     </li>
                     <li class="nav-item">
@@ -79,8 +75,9 @@ require_once 'config.php';
                 </ul>
                 
              
-                <form class="d-flex me-3" action="search.php" method="get">
-                    <input class="form-control me-2" type="search" name="search" placeholder="Search equipment...">
+                <form class="d-flex me-3" action="browse.php" method="get">
+                    <input class="form-control me-2" type="search" name="search" placeholder="Search equipment..."
+                    value="<?php echo isset($_GET['search']) ? htmlspecialchars($_GET['search']) : ''; ?>">
                     <button class="btn btn-outline-light" type="submit"><i class="fas fa-search"></i></button>
                 </form>
                             
@@ -177,7 +174,7 @@ require_once 'config.php';
                         <i class="fas fa-calendar-check fa-3x text-primary opacity-50"></i>
                     </div>
                     <div class="mt-3">
-                        <a href="book.php" class="btn btn-sm btn-outline-primary">Bookings</a>
+                        <a href="browse.php" class="btn btn-sm btn-outline-primary">Rent</a>
                     </div>
                 </div>
             </div>
@@ -192,7 +189,7 @@ require_once 'config.php';
                         <i class="fas fa-mountain fa-3x text-primary opacity-50"></i>
                     </div>
                     <div class="mt-3">
-                        <a href="return.php" class="btn btn-sm btn-outline-primary">Return Items</a>
+                        <a href="login.php" class="btn btn-sm btn-outline-primary">Return Items</a>
                     </div>
                 </div>
             </div>
@@ -221,6 +218,6 @@ require_once 'config.php';
 </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
-</index.body>
+</body>
 
 </html>
