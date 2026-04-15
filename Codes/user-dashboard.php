@@ -450,10 +450,9 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
                                                 <br>
                                                 <small class="text-muted">Available: <?php echo $item['available_quantity']; ?></small>
                                             </div>
-                                            <a href="?rent_id=<?php echo $item['equipment_id']; ?>"
-                                               class="btn btn-rent"
-                                               onclick="return confirm('Rent this equipment for 4 days?')">
-                                                <i class="fas fa-hand-holding-heart me-1"></i>Rent
+                                            <a href="browse.php"
+                                               class="btn btn-rent">
+                                                <i class="fas fa-shopping-cart me-1"></i>Browse &amp; Rent
                                             </a>
                                         </div>
                                     </div>
@@ -539,19 +538,7 @@ $categories = $pdo->query("SELECT * FROM equipment_categories ORDER BY category_
             });
         }
 
-        document.querySelectorAll('.btn-rent').forEach(function (btn) {
-            btn.addEventListener('click', function (e) {
-                e.preventDefault();
-                const name    = this.closest('.card').querySelector('.card-title').textContent.trim();
-                const dueDate = new Date();
-                dueDate.setDate(dueDate.getDate() + 4);
-                const formatted = dueDate.toLocaleDateString('en-GB', { day:'numeric', month:'long', year:'numeric' });
-                const confirmed = confirm(
-                    'Rent "' + name + '" for 4 days?\n\nDue back by: ' + formatted
-                );
-                if (confirmed) window.location.href = this.href;
-            });
-        });
+
 
         const tabLinks = document.querySelectorAll('#dashboardTabs button[data-bs-toggle="tab"]');
 
