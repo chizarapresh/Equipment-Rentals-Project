@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Host: localhost
--- Generation Time: Apr 05, 2026 at 09:18 PM
+-- Generation Time: Apr 16, 2026 at 12:16 AM
 -- Server version: 8.4.7
 -- PHP Version: 8.5.1
 
@@ -20,6 +20,22 @@ SET time_zone = "+00:00";
 --
 -- Database: `db2417081_equipmentdb`
 --
+
+-- --------------------------------------------------------
+
+--
+-- Table structure for table `contact_messages`
+--
+
+CREATE TABLE `contact_messages` (
+  `message_id` int NOT NULL,
+  `name` varchar(100) NOT NULL,
+  `email` varchar(100) NOT NULL,
+  `subject` varchar(150) NOT NULL,
+  `message` text NOT NULL,
+  `status` enum('unread','read') NOT NULL DEFAULT 'unread',
+  `submitted_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 
 -- --------------------------------------------------------
 
@@ -48,13 +64,12 @@ INSERT INTO `equipment` (`equipment_id`, `categoryID`, `name`, `description`, `d
 (1, 102, 'Tent (2-Person)', 'Lightweight 2-person dome tent, waterproof and easy to pitch. Ideal for weekend camping trips.', 8.00, 10, 10, 'available', 'new', 'images/equipment/tent-2person.jpg'),
 (2, 102, 'Tent (4-Person)', 'Spacious 4-person family tent with two rooms and a weather-resistant fly sheet.', 12.00, 10, 10, 'available', 'good', 'images/equipment/tent-4person.jpg'),
 (3, 102, 'Sleeping Bag', 'Mummy-style sleeping bag rated to -5°C, packable and lightweight for backpacking.', 5.00, 10, 10, 'available', 'new', 'images/equipment/sleeping-bag.jpg'),
-(4, 102, 'Sleeping Pad', 'Self-inflating foam sleeping pad providing insulation and comfort on uneven ground.', 3.00, 10, 10, 'available', 'good', 'images/equipment/sleeping-pad.png'),
+(4, 102, 'Sleeping Pad', 'Self-inflating foam sleeping pad providing insulation and comfort on uneven ground.', 3.00, 10, 9, 'available', 'good', 'images/equipment/sleeping-pad.png'),
 (5, 102, 'Trekking Poles (Pair)', 'Adjustable aluminium trekking poles with cork grips and wrist straps. Collapsible for easy packing.', 4.00, 10, 10, 'available', 'good', 'images/equipment/trekking-poles.jpg'),
-(6, 102, 'Headlamp', 'Rechargeable LED headlamp with 300 lumen output and red night-vision mode. Waterproof rated IPX4.', 2.00, 10, 10, 'available', 'new', 'images/equipment/headlamp.jpg'),
+(6, 102, 'Headlamp', 'Rechargeable LED headlamp with 300 lumen output and red night-vision mode. Waterproof rated IPX4.', 2.00, 10, 9, 'available', 'new', 'images/equipment/headlamp.jpg'),
 (7, 102, 'Topographic Map Set', 'Set of detailed OS topographic maps covering popular hiking regions in Scotland.', 1.50, 10, 10, 'available', 'good', 'images/equipment/topo-map.jpg'),
-(8, 102, 'Compass', 'Silva baseplate compass with declination adjustment and magnifier. Essential for navigation.', 1.50, 10, 10, 'available', 'new', 'images/equipment/compass.jpg'),
-(9, 102, 'Camp Chair', 'Foldable lightweight camp chair with cup holder and carry bag. Supports up to 120kg.', 3.00, 10, 10, 'available', 'good', 'images/equipment/camp-chair.jpg'),
-(10, 102, 'Camp Table', 'Aluminium folding camp table, adjustable height, suitable for 4 people.', 4.00, 10, 10, 'available', 'good', 'images/equipment/camp-table.jpg'),
+(9, 102, 'Camp Chair', 'Foldable lightweight camp chair with cup holder and carry bag. Supports up to 120kg.', 3.00, 10, 10, 'maintenance', 'good', 'images/equipment/camp-chair-1776288407.jpg'),
+(10, 102, 'Camp Table', 'Aluminium folding camp table, adjustable height, suitable for 4 people.', 4.00, 10, 9, 'maintenance', 'good', 'images/equipment/camp-table.jpg'),
 (11, 101, 'Kayak (Single)', 'Stable sit-on-top single kayak suitable for calm lochs and coastal waters. Paddle included.', 20.00, 10, 10, 'available', 'good', 'images/equipment/kayak-single.jpg'),
 (12, 101, 'Kayak (Double)', 'Two-person touring kayak with storage hatches. Great for loch and sea exploration.', 30.00, 10, 10, 'available', 'good', 'images/equipment/kayak-double.jpg'),
 (13, 101, 'Paddleboard (SUP)', 'Inflatable stand-up paddleboard with paddle, pump and carry bag. Suitable for all skill levels.', 18.00, 10, 10, 'available', 'new', 'images/equipment/paddleboard.jpg'),
@@ -66,10 +81,16 @@ INSERT INTO `equipment` (`equipment_id`, `categoryID`, `name`, `description`, `d
 (19, 101, 'Snorkel Set', 'Mask, snorkel and fins set for exploring shallow coastal waters.', 5.00, 10, 10, 'available', 'new', 'images/equipment/snorkel-set.jpg'),
 (20, 103, 'Campervan (2-Berth)', 'Compact 2-berth campervan with kitchenette, heating and bedding. Full licence required.', 120.00, 10, 10, 'available', 'good', 'images/equipment/campervan-2.jpg'),
 (21, 103, 'Campervan (4-Berth)', 'Famil y 4-berth campervan with full kitchen, shower, and heating. Ideal for extended trips.', 180.00, 10, 10, 'available', 'good', 'images/equipment/campervan-4.jpg'),
-(22, 103, 'Camping Trailer', 'Tow-behind camping trailer with pop-up tent section and storage. Requires tow bar fitting.', 55.00, 10, 10, 'available', 'fair', 'images/equipment/camping-trailer.jpg'),
+(22, 103, 'Camping Trailer', 'Tow-behind camping trailer with pop-up tent section and storage. Requires tow bar fitting.', 55.00, 10, 8, 'maintenance', 'fair', 'images/equipment/camping-trailer.jpg'),
 (23, 103, 'Roof Rack (Universal)', 'Universal fit roof rack compatible with most car roof rails. Load-rated to 75kg.', 10.00, 10, 10, 'available', 'good', 'images/equipment/roof-rack.jpg'),
 (24, 103, 'Watersports Carrier', 'Roof-mounted carrier for kayaks, paddleboards and surfboards. Foam padding to protect equipment.', 12.00, 10, 10, 'available', 'new', 'images/equipment/watersports-carrier.jpg'),
-(25, 103, 'Bike Rack (4-Bike)', 'Towbar-mounted bike rack for up to 4 bikes. Quick-release and lockable.', 8.00, 10, 10, 'available', 'good', 'images/equipment/bike-rack.jpg');
+(25, 103, 'Bike Rack (4-Bike)', 'Towbar-mounted bike rack for up to 4 bikes. Quick-release and lockable.', 8.00, 10, 10, 'available', 'good', 'images/equipment/bike-rack.jpg'),
+(26, 103, 'Snowmobile', 'Motorised vehicle for travelling on snow and ice', 90.00, 4, 3, 'available', 'good', 'images/equipment/snowmobile-1775422391.jpg'),
+(29, 103, 'Truck', 'A solid vehicle for navigating any terrain', 100.00, 5, 5, 'available', 'good', 'images/equipment/truck-1775498566.jpg'),
+(30, 103, 'rack', 'Motorised vehicle for travelling on snow and ice', 5.00, 10, 10, 'available', 'new', 'images/equipment/rack-1776286634.jpg'),
+(31, 102, 'Stove', 'Cooking', 4.00, 5, 5, 'available', 'new', 'images/equipment/stove-1776288252.jpg'),
+(32, 101, 'FISHING TROLLEY', 'FOR FISHING', 5.00, 5, 5, 'available', 'good', NULL),
+(33, 101, 'fishing', 'fishing trolley', 3.00, 4, 4, 'available', 'new', NULL);
 
 -- --------------------------------------------------------
 
@@ -114,7 +135,18 @@ CREATE TABLE `rentals` (
 INSERT INTO `rentals` (`rental_id`, `user_id`, `equipment_id`, `rental_date`, `due_date`, `return_date`, `status`) VALUES
 (1, 1000, 25, '2026-04-04', '2026-04-11', '2026-04-05', 'returned'),
 (2, 1000, 10, '2026-04-04', '2026-04-11', '2026-04-05', 'returned'),
-(3, 1000, 9, '2026-04-05', '2026-04-12', '2026-04-05', 'returned');
+(3, 1000, 9, '2026-04-05', '2026-04-12', '2026-04-05', 'returned'),
+(4, 1000, 29, '2026-04-06', '2026-04-10', '2026-04-15', 'returned'),
+(5, 1002, 26, '2026-04-10', '2026-04-14', '2026-04-15', 'returned'),
+(6, 1002, 29, '2026-04-10', '2026-04-14', '2026-04-15', 'returned'),
+(7, 1002, 22, '2026-04-10', '2026-04-14', NULL, 'overdue'),
+(8, 1000, 25, '2026-04-15', '2026-04-19', '2026-04-15', 'returned'),
+(9, 1000, 10, '2026-04-15', '2026-04-22', NULL, 'rented'),
+(10, 1000, 26, '2026-04-15', '2026-04-19', NULL, 'rented'),
+(11, 1000, 22, '2026-04-15', '2026-04-19', NULL, 'rented'),
+(12, 1002, 9, '2026-04-15', '2026-04-20', '2026-04-15', 'returned'),
+(13, 1002, 6, '2026-04-15', '2026-04-19', NULL, 'rented'),
+(14, 1002, 4, '2026-04-15', '2026-04-19', NULL, 'rented');
 
 -- --------------------------------------------------------
 
@@ -141,11 +173,20 @@ CREATE TABLE `users` (
 
 INSERT INTO `users` (`user_id`, `firstname`, `lastname`, `email`, `password_hash`, `phone`, `DOB`, `role`, `account_status`, `date_created`) VALUES
 (1000, 'Jane', 'Doe', 'janedoe@gmail.com', '$2y$12$CnqMaVIe.hNSqMeudXqIUunq4vNMHTdxt7Y6jndyAWikPcYG2DhiW', '+446000000000', '2008-08-01', 'user', 'active', '2026-04-01 22:47:44'),
-(1001, 'John', 'Smith', 'johnsmith@gmail.com', '$2y$12$pPsFdU58mBLZGmAJWUu2e.2cn8TZmfhanCohSlEb3HW.fkAS1zIj.', '+441000000000', '2000-01-04', 'admin', 'active', '2026-04-01 22:54:59');
+(1001, 'John', 'Smith', 'johnsmith@gmail.com', '$2y$12$pPsFdU58mBLZGmAJWUu2e.2cn8TZmfhanCohSlEb3HW.fkAS1zIj.', '+441000000000', NULL, 'admin', 'active', '2026-04-01 22:54:59'),
+(1002, 'Favour', 'Nwosu', 'favour.nwosu@gmail.com', '$2y$12$JOEX2xHSxEGqAjYV.eR2uu/2hGXaEeLPAlcwCnOSl9qaHgKpg04tW', '+4486885744944', '2008-11-10', 'user', 'active', '2026-04-10 19:03:36'),
+(1003, 'JANNA', 'NANN', 'NANN@GMAIL.COM', '$2y$12$e3BSsv8ZlxTqbX56b245yen13yXsAVvkhelHBlxGh.J7sbIonF.Dy', '0050050506', '2000-01-01', 'user', 'active', '2026-04-15 20:58:18'),
+(1004, 'NNNDD', 'GDDDC', 'NNB@GMAIL.COM', '$2y$12$kIpIuJaCu4IVJYBcxtIU3unlnq2v8bMQ0gPRqwRo/3jnBcAgCRIAG', '9699994755', '1999-03-01', 'user', 'active', '2026-04-15 21:25:11');
 
 --
 -- Indexes for dumped tables
 --
+
+--
+-- Indexes for table `contact_messages`
+--
+ALTER TABLE `contact_messages`
+  ADD PRIMARY KEY (`message_id`);
 
 --
 -- Indexes for table `equipment`
@@ -181,10 +222,16 @@ ALTER TABLE `users`
 --
 
 --
+-- AUTO_INCREMENT for table `contact_messages`
+--
+ALTER TABLE `contact_messages`
+  MODIFY `message_id` int NOT NULL AUTO_INCREMENT;
+
+--
 -- AUTO_INCREMENT for table `equipment`
 --
 ALTER TABLE `equipment`
-  MODIFY `equipment_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=26;
+  MODIFY `equipment_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=34;
 
 --
 -- AUTO_INCREMENT for table `equipment_categories`
@@ -196,13 +243,13 @@ ALTER TABLE `equipment_categories`
 -- AUTO_INCREMENT for table `rentals`
 --
 ALTER TABLE `rentals`
-  MODIFY `rental_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=4;
+  MODIFY `rental_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=15;
 
 --
 -- AUTO_INCREMENT for table `users`
 --
 ALTER TABLE `users`
-  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1002;
+  MODIFY `user_id` int NOT NULL AUTO_INCREMENT, AUTO_INCREMENT=1006;
 
 --
 -- Constraints for dumped tables
